@@ -4,5 +4,6 @@ const router = express.Router();
 const sesionesController = require("../controllers/sesiones.controller");
 
 router.get("/", sesionesController.listarSesiones);
+router.get("/:id", sesionesController.obtenerSesionPorId);
 
 module.exports = router;
