@@ -7,5 +7,6 @@ router.get("/", sesionesController.listarSesiones);
 router.get("/:id", sesionesController.obtenerSesionPorId);
 router.post("/", sesionesController.crearSesion);
 router.put("/:id", sesionesController.actualizarSesion);
+router.delete("/:id", sesionesController.eliminarSesion);
 
 module.exports = router;    

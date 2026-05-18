@@ -181,10 +181,32 @@ const actualizarSesion = (req, res) => {
     data: sesionActualizada
   });
 };
+const eliminarSesion = (req, res) => {
+  const id = parseInt(req.params.id);
 
+  const indice = sesiones.findIndex((item) => item.id === id);
+
+  if (indice === -1) {
+    return res.status(404).json({
+      error: true,
+      mensaje: "No se encontró una sesión con el ID proporcionado"
+    });
+  }
+
+  const sesionEliminada = sesiones[indice];
+
+  sesiones.splice(indice, 1);
+
+  res.status(200).json({
+    error: false,
+    mensaje: "Sesión eliminada correctamente",
+    data: sesionEliminada
+  });
+};
 module.exports = {
   listarSesiones,
   obtenerSesionPorId,
   crearSesion,
-  actualizarSesion
+  actualizarSesion,
+  eliminarSesion
 };
