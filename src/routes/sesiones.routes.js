@@ -6,5 +6,6 @@ const sesionesController = require("../controllers/sesiones.controller");
 router.get("/", sesionesController.listarSesiones);
 router.get("/:id", sesionesController.obtenerSesionPorId);
 router.post("/", sesionesController.crearSesion);
+router.put("/:id", sesionesController.actualizarSesion);
 
-module.exports = router;
+module.exports = router;    
