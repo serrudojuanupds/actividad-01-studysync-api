@@ -27,7 +27,80 @@ const obtenerSesionPorId = (req, res) => {
   });
 };
 
+const crearSesion = (req, res) => {
+  const { titulo, materia, fecha, hora, lugar, cupos, completada } = req.body;
+
+  if (!titulo) {
+    return res.status(400).json({
+      error: true,
+      mensaje: "El campo titulo es obligatorio"
+    });
+  }
+
+  if (!materia) {
+    return res.status(400).json({
+      error: true,
+      mensaje: "El campo materia es obligatorio"
+    });
+  }
+
+  if (!fecha) {
+    return res.status(400).json({
+      error: true,
+      mensaje: "El campo fecha es obligatorio"
+    });
+  }
+
+  if (!hora) {
+    return res.status(400).json({
+      error: true,
+      mensaje: "El campo hora es obligatorio"
+    });
+  }
+
+  if (!lugar) {
+    return res.status(400).json({
+      error: true,
+      mensaje: "El campo lugar es obligatorio"
+    });
+  }
+
+  if (!cupos) {
+    return res.status(400).json({
+      error: true,
+      mensaje: "El campo cupos es obligatorio"
+    });
+  }
+
+  if (completada === undefined) {
+    return res.status(400).json({
+      error: true,
+      mensaje: "El campo completada es obligatorio"
+    });
+  }
+
+  const nuevaSesion = {
+    id: sesiones.length + 1,
+    titulo,
+    materia,
+    fecha,
+    hora,
+    lugar,
+    cupos,
+    completada
+  };
+
+  sesiones.push(nuevaSesion);
+
+  res.status(201).json({
+    error: false,
+    mensaje: "Sesión creada correctamente",
+    data: nuevaSesion
+  });
+};
+
 module.exports = {
   listarSesiones,
-  obtenerSesionPorId
+  obtenerSesionPorId,
+  crearSesion
 };
