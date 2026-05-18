@@ -226,7 +226,7 @@ studysync-api/
 │   │   └── error.middleware.js
 │   ├── models/
 │   │   └── sesiones.model.js
-│   ├── routes/
+│   ├── routes/g    
 │   │   └── sesiones.routes.js
 │   └── server.js
 │
@@ -239,11 +239,17 @@ studysync-api/
 
 ## URL de producción
 
-Pendiente de despliegue en Render.
+https://actividad-01-studysync-api.onrender.com
+
+## Pruebas en producción
+
+- https://actividad-01-studysync-api.onrender.com/
+- https://actividad-01-studysync-api.onrender.com/api/sesiones
+- https://actividad-01-studysync-api.onrender.com/api/sesiones/buscar?q=programacion
 
 ## Autor
 
-Actividad desarrollada para la materia **Programación IV | UPDS 2026**.
+Actividad 1s desarrollada para la materia **Programación IV | UPDS 2026**.
 
 Universidad Privada Domingo Savio  
 Facultad de Ingeniería  
