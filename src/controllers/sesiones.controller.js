@@ -203,10 +203,48 @@ const eliminarSesion = (req, res) => {
     data: sesionEliminada
   });
 };
+const normalizarTexto = (texto) => {
+  return texto
+    .toString()
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "");
+};
+
+
+const buscarSesiones = (req, res) => {
+  const q = req.query.q;
+
+  if (!q) {
+    return res.status(400).json({
+      error: true,
+      mensaje: "El parámetro q es obligatorio para realizar la búsqueda"
+    });
+  }
+
+  const textoBusqueda = normalizarTexto(q);
+
+  const resultados = sesiones.filter((sesion) => {
+    return (
+      normalizarTexto(sesion.titulo).includes(textoBusqueda) ||
+      normalizarTexto(sesion.materia).includes(textoBusqueda) ||
+      normalizarTexto(sesion.lugar).includes(textoBusqueda)
+    );
+  });
+
+  res.status(200).json({
+    error: false,
+    mensaje: "Búsqueda realizada correctamente",
+    total: resultados.length,
+    data: resultados
+  });
+};
+
 module.exports = {
   listarSesiones,
   obtenerSesionPorId,
   crearSesion,
   actualizarSesion,
-  eliminarSesion
+  eliminarSesion,
+  buscarSesiones
 };
