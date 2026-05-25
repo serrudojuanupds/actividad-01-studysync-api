@@ -249,8 +249,9 @@ https://actividad-01-studysync-api.onrender.com
 
 ## Autor
 
-Actividad 1s desarrollada para la materia **Programación IV | UPDS 2026**.
+Actividad 1 desarrollada para la materia **Programación IV | UPDS 2026**.
 
+Alumno: Juan Rodrigo Serrudo Fernandez
 Universidad Privada Domingo Savio  
 Facultad de Ingeniería  
 Carrera de Ingeniería de Sistemas
