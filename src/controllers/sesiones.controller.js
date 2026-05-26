@@ -1,4 +1,6 @@
 const sesiones = require("../models/sesiones.model");
+const CHANNELS = require("../events/channels");
+const { publishEvent } = require("../events/publisher");
 
 const listarSesiones = (req, res) => {
   res.status(200).json({
@@ -240,11 +242,50 @@ const buscarSesiones = (req, res) => {
   });
 };
 
+const llenarSesion = async (req, res) => {
+  const id = parseInt(req.params.id);
+
+  const sesion = sesiones.find((item) => item.id === id);
+
+  if (!sesion) {
+    return res.status(404).json({
+      error: true,
+      mensaje: "No se encontró una sesión con el ID proporcionado"
+    });
+  }
+
+  sesion.cupos = 0;
+
+  const event = {
+    type: CHANNELS.STUDY_SESSION_FULL,
+    payload: {
+      id: sesion.id,
+      titulo: sesion.titulo,
+      materia: sesion.materia,
+      fecha: sesion.fecha,
+      hora: sesion.hora,
+      lugar: sesion.lugar,
+      cupos: sesion.cupos,
+      completada: sesion.completada
+    },
+    timestamp: new Date().toISOString(),
+    version: "1.0"
+  };
+
+  await publishEvent(CHANNELS.STUDY_SESSION_FULL, event);
+
+  res.status(200).json({
+    error: false,
+    mensaje: "La sesión fue marcada como llena correctamente",
+    data: sesion
+  });
+};
 module.exports = {
   listarSesiones,
   obtenerSesionPorId,
   crearSesion,
   actualizarSesion,
   eliminarSesion,
-  buscarSesiones
+  buscarSesiones,
+  llenarSesion
 };
