@@ -1,6 +1,6 @@
 const CHANNELS = require("../events/channels");
 const { publishEvent } = require("../events/publisher");
-const { redisPublisher, redisSubscriber } = require("../config/redis");
+const { closeRedisConnections } = require("../config/redis");
 
 const probarPublicador = async () => {
   const event = {
@@ -16,8 +16,7 @@ const probarPublicador = async () => {
 
   await publishEvent(CHANNELS.STUDY_SESSION_CREATED, event);
 
-  redisPublisher.disconnect();
-  redisSubscriber.disconnect();
+  closeRedisConnections();
 };
 
 probarPublicador();

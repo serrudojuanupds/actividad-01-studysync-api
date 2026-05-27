@@ -1,16 +1,21 @@
-const { redisPublisher, redisSubscriber } = require("../config/redis");
+const {
+  getRedisPublisher,
+  closeRedisConnections
+} = require("../config/redis");
 
 const probarConexion = async () => {
   try {
+    const redisPublisher = getRedisPublisher();
+
     const respuesta = await redisPublisher.ping();
 
     console.log("Respuesta de Redis:", respuesta);
     console.log("Conexión con Upstash Redis funcionando correctamente");
 
-    redisPublisher.disconnect();
-    redisSubscriber.disconnect();
+    closeRedisConnections();
   } catch (error) {
     console.error("Error al conectar con Redis:", error.message);
+    closeRedisConnections();
   }
 };
 

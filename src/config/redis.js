@@ -3,26 +3,79 @@ const dotenv = require("dotenv");
 
 dotenv.config();
 
-const redisPublisher = new Redis(process.env.REDIS_URL);
-const redisSubscriber = new Redis(process.env.REDIS_URL);
+let publisherConnection = null;
+let subscriberConnection = null;
 
-redisPublisher.on("connect", () => {
-  console.log("Redis Publisher conectado correctamente");
-});
+const getRedisUrl = () => {
+  const redisUrl = process.env.REDIS_URL;
 
-redisSubscriber.on("connect", () => {
-  console.log("Redis Subscriber conectado correctamente");
-});
+  if (!redisUrl) {
+    throw new Error("La variable REDIS_URL no está configurada");
+  }
 
-redisPublisher.on("error", (error) => {
-  console.error("Error en Redis Publisher:", error.message);
-});
+  if (!redisUrl.startsWith("rediss://")) {
+    throw new Error("REDIS_URL debe comenzar con rediss://");
+  }
 
-redisSubscriber.on("error", (error) => {
-  console.error("Error en Redis Subscriber:", error.message);
-});
+  return redisUrl;
+};
+
+const createRedisConnection = (connectionName) => {
+  const redisUrl = getRedisUrl();
+
+  const connection = new Redis(redisUrl, {
+    maxRetriesPerRequest: 3,
+    retryStrategy(times) {
+      const delay = Math.min(times * 200, 2000);
+      return delay;
+    }
+  });
+
+  connection.on("connect", () => {
+    console.log(`${connectionName} conectado correctamente`);
+  });
+
+  connection.on("error", (error) => {
+    console.error(`Error en ${connectionName}:`, {
+      message: error.message,
+      code: error.code,
+      name: error.name
+    });
+  });
+
+  return connection;
+};
+
+const getRedisPublisher = () => {
+  if (!publisherConnection) {
+    publisherConnection = createRedisConnection("Redis Publisher");
+  }
+
+  return publisherConnection;
+};
+
+const getRedisSubscriber = () => {
+  if (!subscriberConnection) {
+    subscriberConnection = createRedisConnection("Redis Subscriber");
+  }
+
+  return subscriberConnection;
+};
+
+const closeRedisConnections = () => {
+  if (publisherConnection) {
+    publisherConnection.disconnect();
+    publisherConnection = null;
+  }
+
+  if (subscriberConnection) {
+    subscriberConnection.disconnect();
+    subscriberConnection = null;
+  }
+};
 
 module.exports = {
-  redisPublisher,
-  redisSubscriber
+  getRedisPublisher,
+  getRedisSubscriber,
+  closeRedisConnections
 };

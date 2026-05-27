@@ -9,6 +9,6 @@ router.post("/:id/llenar", sesionesController.llenarSesion);
 router.get("/:id", sesionesController.obtenerSesionPorId);
 router.post("/", sesionesController.crearSesion);
 router.put("/:id", sesionesController.actualizarSesion);
+router.delete("/", sesionesController.vaciarSesiones);
 router.delete("/:id", sesionesController.eliminarSesion);
-
 module.exports = router;

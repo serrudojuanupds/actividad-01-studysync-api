@@ -29,7 +29,7 @@ const obtenerSesionPorId = (req, res) => {
   });
 };
 
-const crearSesion = (req, res) => {
+const crearSesion = async (req, res) => {
   const { titulo, materia, fecha, hora, lugar, cupos, completada } = req.body;
 
   if (!titulo) {
@@ -94,14 +94,34 @@ const crearSesion = (req, res) => {
 
   sesiones.push(nuevaSesion);
 
+  const event = {
+    type: CHANNELS.STUDY_SESSION_CREATED,
+    payload: {
+      id: nuevaSesion.id,
+      titulo: nuevaSesion.titulo,
+      materia: nuevaSesion.materia,
+      fecha: nuevaSesion.fecha,
+      hora: nuevaSesion.hora,
+      lugar: nuevaSesion.lugar,
+      cupos: nuevaSesion.cupos,
+      completada: nuevaSesion.completada
+    },
+    timestamp: new Date().toISOString(),
+    version: "1.0"
+  };
+
+  console.log("Publicando evento de sesión creada...");
+  await publishEvent(CHANNELS.STUDY_SESSION_CREATED, event);
+
   res.status(201).json({
     error: false,
+
     mensaje: "Sesión creada correctamente",
     data: nuevaSesion
   });
 };
 
-const actualizarSesion = (req, res) => {
+const actualizarSesion = async (req, res) => {
   const id = parseInt(req.params.id);
 
   const indice = sesiones.findIndex((item) => item.id === id);
@@ -176,6 +196,14 @@ const actualizarSesion = (req, res) => {
   };
 
   sesiones[indice] = sesionActualizada;
+  const event = {
+  type: CHANNELS.STUDY_SESSION_UPDATED,
+  payload: sesionActualizada,
+  timestamp: new Date().toISOString(),
+  version: "1.0"
+};
+
+await publishEvent(CHANNELS.STUDY_SESSION_UPDATED, event);
 
   res.status(200).json({
     error: false,
@@ -183,7 +211,7 @@ const actualizarSesion = (req, res) => {
     data: sesionActualizada
   });
 };
-const eliminarSesion = (req, res) => {
+const eliminarSesion = async (req, res) => {
   const id = parseInt(req.params.id);
 
   const indice = sesiones.findIndex((item) => item.id === id);
@@ -198,6 +226,15 @@ const eliminarSesion = (req, res) => {
   const sesionEliminada = sesiones[indice];
 
   sesiones.splice(indice, 1);
+
+  const event = {
+  type: CHANNELS.STUDY_SESSION_DELETED,
+  payload: sesionEliminada,
+  timestamp: new Date().toISOString(),
+  version: "1.0"
+};
+
+await publishEvent(CHANNELS.STUDY_SESSION_DELETED, event);
 
   res.status(200).json({
     error: false,
@@ -280,6 +317,29 @@ const llenarSesion = async (req, res) => {
     data: sesion
   });
 };
+const vaciarSesiones = async (req, res) => {
+  const totalEliminadas = sesiones.length;
+
+  sesiones.length = 0;
+
+  const event = {
+    type: CHANNELS.STUDY_SESSION_CLEARED,
+    payload: {
+      totalEliminadas
+    },
+    timestamp: new Date().toISOString(),
+    version: "1.0"
+  };
+
+  await publishEvent(CHANNELS.STUDY_SESSION_CLEARED, event);
+
+  res.status(200).json({
+    error: false,
+    mensaje: "Todas las sesiones fueron eliminadas correctamente",
+    totalEliminadas
+  });
+};
+
 module.exports = {
   listarSesiones,
   obtenerSesionPorId,
@@ -287,5 +347,6 @@ module.exports = {
   actualizarSesion,
   eliminarSesion,
   buscarSesiones,
-  llenarSesion
+  llenarSesion,
+  vaciarSesiones
 };
