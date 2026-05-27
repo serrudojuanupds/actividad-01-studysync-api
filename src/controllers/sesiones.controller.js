@@ -29,7 +29,7 @@ const obtenerSesionPorId = (req, res) => {
   });
 };
 
-const crearSesion = (req, res) => {
+const crearSesion = async (req, res) => {
   const { titulo, materia, fecha, hora, lugar, cupos, completada } = req.body;
 
   if (!titulo) {
@@ -94,11 +94,30 @@ const crearSesion = (req, res) => {
 
   sesiones.push(nuevaSesion);
 
+  const event = {
+  type: CHANNELS.STUDY_SESSION_CREATED,
+  payload: {
+    id: nuevaSesion.id,
+    titulo: nuevaSesion.titulo,
+    materia: nuevaSesion.materia,
+    fecha: nuevaSesion.fecha,
+    hora: nuevaSesion.hora,
+    lugar: nuevaSesion.lugar,
+    cupos: nuevaSesion.cupos,
+    completada: nuevaSesion.completada
+  },
+  timestamp: new Date().toISOString(),
+  version: "1.0"
+  };
+
+await publishEvent(CHANNELS.STUDY_SESSION_CREATED, event);
+
   res.status(201).json({
     error: false,
     mensaje: "Sesión creada correctamente",
     data: nuevaSesion
   });
+  
 };
 
 const actualizarSesion = (req, res) => {
