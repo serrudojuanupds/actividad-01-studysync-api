@@ -1,5 +1,6 @@
 // src/server.js
-
+const swaggerUi = require("swagger-ui-express");
+const swaggerDocument = require("./docs/swagger");
 const express = require('express');
 const dotenv = require('dotenv');
 const sesionesRoutes = require("./routes/sesiones.routes");
@@ -12,6 +13,8 @@ dotenv.config();
 const app = express();
 
 app.use(express.json());
+
+app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 
 app.get("/", (req, res) => {
   res.status(200).json({

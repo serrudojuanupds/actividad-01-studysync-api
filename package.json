@@ -4,11 +4,11 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-  "start": "node src/server.js",
-  "dev": "node src/server.js",
-  "subscriber": "node src/subscribers/notification.subscriber.js",
-  "test:redis": "node src/scripts/test-redis.js",
-  "test:publisher": "node src/scripts/test-publisher.js"
+    "start": "node src/server.js",
+    "dev": "node src/server.js",
+    "subscriber": "node src/subscribers/notification.subscriber.js",
+    "test:redis": "node src/scripts/test-redis.js",
+    "test:publisher": "node src/scripts/test-publisher.js"
   },
   "keywords": [],
   "author": "",
@@ -17,6 +17,8 @@
   "dependencies": {
     "dotenv": "^17.4.2",
     "express": "^5.2.1",
-    "ioredis": "^5.11.0"
+    "express-rate-limit": "^8.5.2",
+    "ioredis": "^5.11.0",
+    "swagger-ui-express": "^5.0.1"
   }
 }
