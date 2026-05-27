@@ -1,15 +1,18 @@
-// src/server.js
+const express = require("express");
+const dotenv = require("dotenv");
 const swaggerUi = require("swagger-ui-express");
-const swaggerDocument = require("./docs/swagger");
-const express = require('express');
-const dotenv = require('dotenv');
-const sesionesRoutes = require("./routes/sesiones.routes");
-const { notFoundHandler, errorHandler } = require("./middlewares/error.middleware");
 
-// Configurar dotenv para leer variables de entorno
+const sesionesRoutes = require("./routes/sesiones.routes");
+const swaggerDocument = require("./docs/swagger");
+
+const { apiLimiter } = require("./middlewares/rateLimit.middleware");
+const {
+  notFoundHandler,
+  errorHandler
+} = require("./middlewares/error.middleware");
+
 dotenv.config();
 
-// Crear servidor Express
 const app = express();
 
 app.use(express.json());
@@ -22,6 +25,7 @@ app.get("/", (req, res) => {
   });
 });
 
+app.use("/api", apiLimiter);
 app.use("/api/sesiones", sesionesRoutes);
 
 app.use(notFoundHandler);
