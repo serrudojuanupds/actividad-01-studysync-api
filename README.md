@@ -239,13 +239,13 @@ studysync-api/
 
 ## URL de producción
 
-https://actividad-01-studysync-api.onrender.com
+https://studysync-api-ivi1.onrender.com
 
 ## Pruebas en producción
 
-- https://actividad-01-studysync-api.onrender.com/
-- https://actividad-01-studysync-api.onrender.com/api/sesiones
-- https://actividad-01-studysync-api.onrender.com/api/sesiones/buscar?q=programacion
+- https://studysync-api-ivi1.onrender.com/
+- https://studysync-api-ivi1.onrender.com/api/sesiones
+- https://studysync-api-ivi1.onrender.com/api/sesiones/buscar?q=programacion
 
 ## Autor
 
