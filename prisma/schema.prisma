@@ -12,6 +12,7 @@ model Usuario {
   email     String   @unique
   sesiones  Sesion[]
   createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model Sesion {
@@ -29,4 +30,10 @@ model Sesion {
 
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
+
+  @@index([materia])
+  @@index([fecha])
+  @@index([usuarioId])
+  @@index([completada])
+  @@index([materia, fecha])
 }

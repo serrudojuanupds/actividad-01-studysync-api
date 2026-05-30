@@ -1,7 +1,14 @@
 const prisma = require("../config/prisma");
 const CHANNELS = require("../events/channels");
 const { publishEvent } = require("../events/publisher");
-
+const {
+  getSesionesCache,
+  setSesionesCache,
+  getSesionByIdCache,
+  setSesionByIdCache,
+  invalidateSesionCache,
+  invalidateAllSesionesCache
+} = require("../cache/sesiones.cache");
 /*
   Función auxiliar para normalizar texto.
   Se usa en la búsqueda para ignorar mayúsculas, minúsculas y tildes.
@@ -75,15 +82,29 @@ const validarDatosSesion = ({ titulo, materia, fecha, hora, lugar, cupos, comple
 */
 const listarSesiones = async (req, res) => {
   try {
+    const sesionesCache = await getSesionesCache();
+
+    if (sesionesCache) {
+      return res.status(200).json({
+        error: false,
+        mensaje: "Sesiones obtenidas desde Redis Cache",
+        origen: "redis-cache",
+        data: sesionesCache
+      });
+    }
+
     const sesiones = await prisma.sesion.findMany({
       orderBy: {
         id: "asc"
       }
     });
 
+    await setSesionesCache(sesiones);
+
     res.status(200).json({
       error: false,
-      mensaje: "Sesiones obtenidas correctamente",
+      mensaje: "Sesiones obtenidas desde Supabase",
+      origen: "supabase",
       data: sesiones
     });
   } catch (error) {
@@ -111,6 +132,17 @@ const obtenerSesionPorId = async (req, res) => {
       });
     }
 
+    const sesionCache = await getSesionByIdCache(id);
+
+    if (sesionCache) {
+      return res.status(200).json({
+        error: false,
+        mensaje: "Sesión obtenida desde Redis Cache",
+        origen: "redis-cache",
+        data: sesionCache
+      });
+    }
+
     const sesion = await prisma.sesion.findUnique({
       where: {
         id
@@ -124,9 +156,12 @@ const obtenerSesionPorId = async (req, res) => {
       });
     }
 
+    await setSesionByIdCache(id, sesion);
+
     res.status(200).json({
       error: false,
-      mensaje: "Sesión encontrada correctamente",
+      mensaje: "Sesión obtenida desde Supabase",
+      origen: "supabase",
       data: sesion
     });
   } catch (error) {
@@ -181,6 +216,8 @@ const crearSesion = async (req, res) => {
         usuarioId: usuarioId ? Number(usuarioId) : null
       }
     });
+
+    await invalidateSesionCache(nuevaSesion.id);
 
     const event = {
       type: CHANNELS.STUDY_SESSION_CREATED,
@@ -276,6 +313,8 @@ const actualizarSesion = async (req, res) => {
       }
     });
 
+    await invalidateSesionCache(id);
+
     const event = {
       type: CHANNELS.STUDY_SESSION_UPDATED,
       payload: sesionActualizada,
@@ -338,6 +377,8 @@ const eliminarSesion = async (req, res) => {
         id
       }
     });
+
+    await invalidateSesionCache(id);
 
     const event = {
       type: CHANNELS.STUDY_SESSION_DELETED,
@@ -449,6 +490,8 @@ const llenarSesion = async (req, res) => {
       }
     });
 
+    await invalidateSesionCache(id);
+
     const event = {
       type: CHANNELS.STUDY_SESSION_FULL,
       payload: sesionLlena,
@@ -486,7 +529,9 @@ const vaciarSesiones = async (req, res) => {
   try {
     const totalAntesDeEliminar = await prisma.sesion.count();
 
-    await prisma.sesion.deleteMany();
+    await prisma.$executeRaw`TRUNCATE TABLE "Sesion" RESTART IDENTITY CASCADE`;
+
+    await invalidateAllSesionesCache();
 
     const event = {
       type: CHANNELS.STUDY_SESSION_CLEARED,
@@ -512,6 +557,8 @@ const vaciarSesiones = async (req, res) => {
     });
   }
 };
+
+
 
 module.exports = {
   listarSesiones,
