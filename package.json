@@ -9,6 +9,7 @@
     "subscriber": "node src/subscribers/notification.subscriber.js",
     "test:redis": "node src/scripts/test-redis.js",
     "test:publisher": "node src/scripts/test-publisher.js",
+    "test": "jest --runInBand",
     "postinstall": "prisma generate"
   },
   "keywords": [],
@@ -26,6 +27,8 @@
     "swagger-ui-express": "^5.0.1"
   },
   "devDependencies": {
-    "prisma": "^7.8.0"
+    "jest": "^30.4.2",
+    "prisma": "^7.8.0",
+    "supertest": "^7.2.2"
   }
 }
