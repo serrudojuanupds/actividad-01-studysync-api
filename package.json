@@ -8,7 +8,8 @@
     "dev": "node src/server.js",
     "subscriber": "node src/subscribers/notification.subscriber.js",
     "test:redis": "node src/scripts/test-redis.js",
-    "test:publisher": "node src/scripts/test-publisher.js"
+    "test:publisher": "node src/scripts/test-publisher.js",
+    "postinstall": "prisma generate"
   },
   "keywords": [],
   "author": "",
