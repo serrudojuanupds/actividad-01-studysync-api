@@ -247,6 +247,45 @@ https://studysync-api-ivi1.onrender.com
 - https://studysync-api-ivi1.onrender.com/api/sesiones
 - https://studysync-api-ivi1.onrender.com/api/sesiones/buscar?q=programacion
 
+
+
+-----------------------------------------------------------------------------
+
+
+# Actividad 02 - Mensajería Asíncrona con Redis Pub/Sub
+
+## Descripción
+
+En esta segunda actividad se implementó un sistema de mensajería asíncrona utilizando Redis Pub/Sub mediante la plataforma Upstash.
+
+El objetivo fue permitir que la API de StudySync pueda publicar eventos cuando ocurre una acción importante dentro del sistema, y que otro proceso independiente pueda escuchar esos eventos en tiempo real.
+
+En este caso, la API actúa como publicador y un proceso separado actúa como suscriptor.
+
+## ¿Qué es Redis Pub/Sub?
+
+Redis Pub/Sub es un mecanismo de publicación y suscripción de mensajes.
+
+Su funcionamiento se basa en tres elementos principales:
+
+- Publicador: envía un mensaje a un canal.
+- Canal: medio por donde viaja el mensaje.
+- Suscriptor: escucha uno o varios canales y recibe los mensajes publicados.
+
+El flujo general implementado fue:
+
+```txt
+API StudySync
+     ↓
+Publicador
+     ↓
+Redis Pub/Sub - Upstash
+     ↓
+Suscriptor
+     ↓
+Notificación en consola
+
+
 ## Autor
 
 Actividad 1 desarrollada para la materia **Programación IV | UPDS 2026**.
