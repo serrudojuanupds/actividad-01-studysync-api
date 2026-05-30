@@ -5,9 +5,11 @@ const swaggerUi = require("swagger-ui-express");
 dotenv.config();
 
 const sesionesRoutes = require("./routes/sesiones.routes");
+const authRoutes = require("./routes/auth.routes");
 const swaggerDocument = require("./docs/swagger");
 
 const { apiLimiter } = require("./middlewares/rateLimit.middleware");
+const { autenticarToken } = require("./middlewares/auth.middleware");
 const {
   notFoundHandler,
   errorHandler
@@ -25,8 +27,10 @@ app.get("/", (req, res) => {
   });
 });
 
+app.use("/auth", apiLimiter, authRoutes);
+
 app.use("/api", apiLimiter);
-app.use("/api/sesiones", sesionesRoutes);
+app.use("/api/sesiones", autenticarToken, sesionesRoutes);
 
 app.use(notFoundHandler);
 app.use(errorHandler);
