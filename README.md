@@ -704,3 +704,594 @@ Con esta implementación, la API StudySync evolucionó de una API REST básica a
 Redis Pub/Sub permite desacoplar procesos, ya que la API publica eventos y otros componentes pueden reaccionar a ellos de manera independiente. Swagger facilita la documentación y prueba de endpoints, mientras que Rate Limiting agrega una capa básica de seguridad para el consumo de la API.  git
 
 
+---
+
+# Actividad 03 - BD en la Nube + Redis Integrado
+
+## Descripción general
+
+En la Actividad 03 se integró la API REST de **StudySync** con una base de datos en la nube utilizando **Supabase PostgreSQL** y **Prisma ORM**.
+
+El objetivo principal fue reemplazar el almacenamiento en memoria por una base de datos persistente, manteniendo la integración con Redis para eventos en tiempo real y agregando caché para mejorar el rendimiento de las consultas.
+
+Con esta implementación, la API ahora permite:
+
+- Guardar sesiones de estudio en una base de datos real.
+- Consultar datos persistentes aunque el servidor se reinicie.
+- Publicar eventos en Redis Pub/Sub cuando cambia la base de datos.
+- Utilizar Redis Cache para acelerar lecturas frecuentes.
+- Invalidar el caché cuando se crea, actualiza, elimina, llena o vacía una sesión.
+
+---
+
+## Objetivo de la actividad
+
+Integrar los componentes desarrollados en actividades anteriores:
+
+```txt
+Actividad 01 → API REST
+Actividad 02 → Redis Pub/Sub
+Actividad 03 → Supabase PostgreSQL + Prisma ORM
+```
+
+El resultado final es una API con base de datos en la nube, mensajería asíncrona y caché integrado.
+
+---
+
+## Tecnologías utilizadas
+
+| Tecnología | Uso dentro del proyecto |
+|---|---|
+| Node.js | Entorno de ejecución del backend. |
+| Express | Framework para construir la API REST. |
+| Supabase | Plataforma cloud utilizada para la base de datos PostgreSQL. |
+| PostgreSQL | Motor de base de datos relacional. |
+| Prisma ORM | ORM utilizado para mapear modelos del código hacia tablas de la base de datos. |
+| Upstash Redis | Servicio Redis en la nube. |
+| Redis Pub/Sub | Publicación de eventos en tiempo real. |
+| Redis Cache | Almacenamiento temporal para acelerar consultas. |
+| Swagger | Documentación interactiva de endpoints. |
+| Render | Plataforma de despliegue de la API. |
+| GitHub | Control de versiones y repositorio del proyecto. |
+
+---
+
+## ¿Qué es un ORM?
+
+Un ORM significa **Object Relational Mapping**, o en español, **Mapeo Objeto-Relacional**.
+
+Un ORM permite trabajar con una base de datos usando modelos y objetos del lenguaje de programación, sin escribir SQL manualmente para cada operación.
+
+En este proyecto, el ORM utilizado es:
+
+```txt
+Prisma ORM
+```
+
+Ejemplo de consulta con Prisma:
+
+```js
+await prisma.sesion.findMany();
+```
+
+Esto reemplaza una consulta SQL tradicional como:
+
+```sql
+SELECT * FROM "Sesion";
+```
+
+---
+
+## Aplicación de Prisma ORM en el proyecto
+
+Prisma se aplica principalmente en estos archivos:
+
+| Archivo | Función |
+|---|---|
+| `prisma/schema.prisma` | Define los modelos de datos y sus relaciones. |
+| `prisma.config.ts` | Configura la conexión hacia la base de datos. |
+| `src/config/prisma.js` | Crea la instancia de Prisma Client para usarla en el backend. |
+| `src/controllers/sesiones.controller.js` | Usa Prisma para realizar operaciones CRUD sobre Supabase. |
+
+---
+
+## Modelos definidos en Prisma
+
+Se definieron dos modelos principales:
+
+```prisma
+model Usuario {
+  id        Int      @id @default(autoincrement())
+  nombre    String
+  email     String   @unique
+  sesiones  Sesion[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Sesion {
+  id         Int      @id @default(autoincrement())
+  titulo     String
+  materia    String
+  fecha      String
+  hora       String
+  lugar      String
+  cupos      Int
+  completada Boolean  @default(false)
+
+  usuarioId  Int?
+  usuario    Usuario? @relation(fields: [usuarioId], references: [id])
+
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([materia])
+  @@index([fecha])
+  @@index([usuarioId])
+  @@index([completada])
+  @@index([materia, fecha])
+}
+```
+
+---
+
+## Relación entre modelos
+
+La relación definida es:
+
+```txt
+Usuario 1 ---- N Sesion
+```
+
+Esto significa que un usuario puede tener muchas sesiones de estudio, pero cada sesión pertenece a un solo usuario.
+
+Esta relación permite estructurar mejor la información y cumplir con una arquitectura de base de datos más sólida.
+
+---
+
+## Índices justificados
+
+Para mejorar el rendimiento de las consultas en Supabase PostgreSQL, se agregaron índices en campos estratégicos del modelo `Sesion`.
+
+| Índice | Justificación |
+|---|---|
+| `materia` | Permite optimizar búsquedas o filtros por materia. |
+| `fecha` | Permite consultar sesiones por día o fecha específica. |
+| `usuarioId` | Optimiza la relación entre usuarios y sesiones. |
+| `completada` | Permite filtrar sesiones pendientes o completadas. |
+| `materia + fecha` | Optimiza búsquedas combinadas por materia y fecha. |
+
+Estos índices ayudan a que la base de datos responda de forma más eficiente cuando existan muchos registros.
+
+---
+
+## Arquitectura general del sistema
+
+La arquitectura final del proyecto integra API REST, base de datos, ORM, Redis Pub/Sub y Redis Cache.
+
+```txt
+┌──────────────────────┐
+│ Cliente / Thunder    │
+│ Client / Swagger     │
+└──────────┬───────────┘
+           │
+           ▼
+┌──────────────────────┐
+│ API REST StudySync   │
+│ Node.js + Express    │
+└──────────┬───────────┘
+           │
+           ├────────────────────────────┐
+           │                            │
+           ▼                            ▼
+┌──────────────────────┐      ┌──────────────────────┐
+│ Prisma ORM           │      │ Redis Cache           │
+│ Mapeo objeto-relac.  │      │ Lecturas rápidas      │
+└──────────┬───────────┘      └──────────────────────┘
+           │
+           ▼
+┌──────────────────────┐
+│ Supabase PostgreSQL  │
+│ Base de datos nube   │
+└──────────────────────┘
+
+
+┌──────────────────────┐
+│ API REST StudySync   │
+└──────────┬───────────┘
+           │ Publica eventos
+           ▼
+┌──────────────────────┐
+│ Redis Pub/Sub        │
+│ Upstash Redis        │
+└──────────┬───────────┘
+           │
+           ▼
+┌──────────────────────┐
+│ Subscriber           │
+│ Notificaciones       │
+└──────────────────────┘
+```
+
+---
+
+## Explicación de la arquitectura
+
+Supabase PostgreSQL se utiliza como base de datos principal para almacenar la información de forma persistente.
+
+Prisma ORM permite comunicar la API con la base de datos mediante modelos y métodos de consulta, evitando escribir SQL manualmente en cada operación.
+
+Redis se utiliza con dos propósitos:
+
+1. **Redis Pub/Sub:** para publicar eventos cuando ocurren cambios en la base de datos.
+2. **Redis Cache:** para almacenar temporalmente consultas frecuentes y mejorar el rendimiento.
+
+Redis no reemplaza a la base de datos. La complementa.
+
+```txt
+La base de datos guarda la información.
+Redis acelera lecturas y notifica cambios.
+```
+
+---
+
+## Flujo del CRUD persistente
+
+Antes, las sesiones se almacenaban en memoria mediante un arreglo local.
+
+Ahora, las operaciones se realizan directamente en Supabase PostgreSQL usando Prisma.
+
+| Operación | Antes | Ahora |
+|---|---|---|
+| Listar sesiones | Arreglo en memoria | `prisma.sesion.findMany()` |
+| Buscar por ID | `sesiones.find()` | `prisma.sesion.findUnique()` |
+| Crear sesión | `sesiones.push()` | `prisma.sesion.create()` |
+| Actualizar sesión | Reemplazo en arreglo | `prisma.sesion.update()` |
+| Eliminar sesión | `sesiones.splice()` | `prisma.sesion.delete()` |
+| Vaciar sesiones | `sesiones.length = 0` | `TRUNCATE` o `deleteMany()` |
+
+---
+
+## Endpoints principales
+
+| Método | Endpoint | Función |
+|---|---|---|
+| `GET` | `/api/sesiones` | Lista las sesiones registradas. |
+| `GET` | `/api/sesiones/:id` | Obtiene una sesión por ID. |
+| `POST` | `/api/sesiones` | Crea una nueva sesión. |
+| `PUT` | `/api/sesiones/:id` | Actualiza una sesión existente. |
+| `POST` | `/api/sesiones/:id/llenar` | Marca una sesión como llena. |
+| `DELETE` | `/api/sesiones/:id` | Elimina una sesión por ID. |
+| `DELETE` | `/api/sesiones` | Elimina todas las sesiones. |
+| `GET` | `/api/sesiones/buscar?q=texto` | Busca sesiones por texto. |
+
+---
+
+## Integración Redis + Base de Datos
+
+Cada vez que se modifica la base de datos, la API publica un evento en Redis Pub/Sub.
+
+| Acción | Endpoint | Evento Redis |
+|---|---|---|
+| Crear sesión | `POST /api/sesiones` | `study-session.created` |
+| Actualizar sesión | `PUT /api/sesiones/:id` | `study-session.updated` |
+| Eliminar sesión | `DELETE /api/sesiones/:id` | `study-session.deleted` |
+| Marcar sesión llena | `POST /api/sesiones/:id/llenar` | `study-session.full` |
+| Vaciar sesiones | `DELETE /api/sesiones` | `study-session.cleared` |
+
+El flujo es:
+
+```txt
+Cliente realiza petición
+        ↓
+API modifica Supabase con Prisma
+        ↓
+API invalida caché Redis
+        ↓
+API publica evento Redis Pub/Sub
+        ↓
+Subscriber recibe notificación
+```
+
+---
+
+## Redis Cache
+
+Se agregó caché Redis para acelerar las consultas frecuentes.
+
+Cuando se ejecuta:
+
+```txt
+GET /api/sesiones
+```
+
+la API primero intenta obtener los datos desde Redis Cache.
+
+Si los datos existen en caché:
+
+```txt
+Cache HIT → Responde desde Redis
+```
+
+Si los datos no existen:
+
+```txt
+Cache MISS → Consulta Supabase → Guarda resultado en Redis
+```
+
+---
+
+## Invalidación de caché
+
+Para evitar datos desactualizados, el caché se invalida cuando se modifica la base de datos.
+
+| Acción | Caché invalidado |
+|---|---|
+| Crear sesión | Lista general y sesión creada. |
+| Actualizar sesión | Lista general y sesión actualizada. |
+| Eliminar sesión | Lista general y sesión eliminada. |
+| Marcar sesión llena | Lista general y sesión modificada. |
+| Vaciar sesiones | Todo el caché de sesiones. |
+
+Esto garantiza que después de una modificación, la siguiente consulta vuelva a consultar Supabase y actualice el caché.
+
+---
+
+## Evidencia de caché
+
+Primera consulta:
+
+```txt
+GET /api/sesiones
+```
+
+Respuesta esperada:
+
+```json
+{
+  "error": false,
+  "mensaje": "Sesiones obtenidas desde Supabase",
+  "origen": "supabase",
+  "data": []
+}
+```
+
+Segunda consulta al mismo endpoint:
+
+```json
+{
+  "error": false,
+  "mensaje": "Sesiones obtenidas desde Redis Cache",
+  "origen": "redis-cache",
+  "data": []
+}
+```
+
+En consola se puede observar:
+
+```txt
+Cache MISS: cache:sesiones:list
+Cache SET: cache:sesiones:list
+Cache HIT: cache:sesiones:list
+```
+
+---
+
+## Variables de entorno
+
+Para que el sistema funcione correctamente, se utilizan las siguientes variables:
+
+```env
+PORT=3000
+REDIS_URL=rediss://default:TU_TOKEN@TU_HOST.upstash.io:6379
+DATABASE_URL="postgresql://USER:PASSWORD@HOST:5432/postgres"
+DIRECT_URL="postgresql://USER:PASSWORD@HOST:5432/postgres"
+```
+
+Estas variables no deben subirse a GitHub en el archivo `.env`.
+
+Se debe incluir un archivo `.env.example` con valores de referencia sin credenciales reales.
+
+---
+
+## Comandos utilizados
+
+| Comando | Función |
+|---|---|
+| `npm install prisma --save-dev` | Instala Prisma como dependencia de desarrollo. |
+| `npm install @prisma/client` | Instala Prisma Client para usarlo en el código. |
+| `npm install @prisma/adapter-pg pg` | Instala el adaptador PostgreSQL requerido por Prisma 7. |
+| `npx prisma init` | Inicializa Prisma en el proyecto. |
+| `npx prisma db push` | Sincroniza los modelos con la base de datos. |
+| `npx prisma generate` | Genera Prisma Client. |
+| `npm run dev` | Ejecuta la API localmente. |
+| `npm run subscriber` | Ejecuta el suscriptor Redis Pub/Sub. |
+| `npm run test:redis` | Prueba la conexión con Redis. |
+| `npm run test:publisher` | Publica un evento de prueba. |
+
+---
+
+## Pruebas realizadas
+
+### 1. Crear sesión
+
+```txt
+POST /api/sesiones
+```
+
+Resultado esperado:
+
+```txt
+La sesión se guarda en Supabase.
+Se invalida el caché.
+Se publica el evento study-session.created.
+El subscriber recibe la notificación.
+```
+
+---
+
+### 2. Consultar sesiones
+
+```txt
+GET /api/sesiones
+```
+
+Resultado esperado:
+
+```txt
+Primera consulta: origen supabase.
+Segunda consulta: origen redis-cache.
+```
+
+---
+
+### 3. Actualizar sesión
+
+```txt
+PUT /api/sesiones/:id
+```
+
+Resultado esperado:
+
+```txt
+La sesión se actualiza en Supabase.
+El caché se invalida.
+Se publica el evento study-session.updated.
+```
+
+---
+
+### 4. Eliminar sesión
+
+```txt
+DELETE /api/sesiones/:id
+```
+
+Resultado esperado:
+
+```txt
+La sesión se elimina de Supabase.
+El caché se invalida.
+Se publica el evento study-session.deleted.
+```
+
+---
+
+### 5. Vaciar sesiones
+
+```txt
+DELETE /api/sesiones
+```
+
+Resultado esperado:
+
+```txt
+Las sesiones se eliminan de Supabase.
+Se invalida todo el caché de sesiones.
+Se publica el evento study-session.cleared.
+```
+
+---
+
+## Prueba de persistencia
+
+Para comprobar que los datos ya no se guardan en memoria:
+
+1. Crear una sesión con `POST /api/sesiones`.
+2. Verificar que aparece en Supabase.
+3. Reiniciar el servidor.
+4. Ejecutar `GET /api/sesiones`.
+5. Confirmar que la sesión sigue existiendo.
+
+Esto demuestra que los datos son persistentes y se almacenan en una base de datos en la nube.
+
+---
+
+## Despliegue en Render
+
+La API fue desplegada en Render.
+
+En Render se configuraron las siguientes variables de entorno:
+
+```txt
+REDIS_URL
+DATABASE_URL
+```
+
+Además, para que Prisma funcione correctamente en producción, se agregó generación del cliente Prisma durante el proceso de instalación o despliegue.
+
+URL de producción:
+
+```txt
+https://TU-URL-DE-RENDER.onrender.com
+```
+
+---
+
+## Swagger
+
+La documentación interactiva de la API se mantiene disponible en:
+
+```txt
+/api-docs
+```
+
+Ejemplo local:
+
+```txt
+http://localhost:3000/api-docs
+```
+
+Ejemplo en producción:
+
+```txt
+https://TU-URL-DE-RENDER.onrender.com/api-docs
+```
+
+---
+
+## Rate Limiting
+
+La API mantiene protección básica contra exceso de solicitudes mediante `express-rate-limit`.
+
+Configuración:
+
+```txt
+100 solicitudes cada 15 minutos por IP
+```
+
+Cuando se supera el límite, la API responde:
+
+```json
+{
+  "error": true,
+  "mensaje": "Demasiadas solicitudes. Intente nuevamente más tarde."
+}
+```
+
+Código HTTP:
+
+```txt
+429 Too Many Requests
+```
+
+---
+
+## Nivel estratégico alcanzado
+
+| Criterio | Implementación realizada |
+|---|---|
+| BD en la nube funcional | Supabase PostgreSQL, Prisma ORM, modelos relacionados e índices justificados. |
+| Integración Redis + BD | Redis Pub/Sub, Redis Cache e invalidación de caché al modificar la base de datos. |
+| Arquitectura documentada | Diagrama de API, Prisma, Supabase, Redis Cache y Redis Pub/Sub. |
+| Pruebas de integración | Pruebas de CRUD, persistencia, eventos Redis y validación en Supabase. |
+
+---
+
+## Conclusión
+
+La Actividad 03 permitió evolucionar StudySync API hacia una arquitectura más completa y cercana a un entorno real.
+
+La API ya no depende de datos en memoria, sino que utiliza Supabase PostgreSQL para almacenar la información de forma persistente. Prisma ORM permite trabajar con la base de datos mediante modelos y métodos de consulta. Redis se utiliza tanto para eventos Pub/Sub como para caché, lo que mejora la comunicación y el rendimiento del sistema.
+
+Con esta integración, StudySync API cuenta con una base de datos en la nube, comunicación asíncrona, invalidación de caché, documentación interactiva y despliegue en Render.
