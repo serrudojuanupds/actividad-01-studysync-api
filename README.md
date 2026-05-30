@@ -721,6 +721,7 @@ Con esta implementación, la API ahora permite:
 - Publicar eventos en Redis Pub/Sub cuando cambia la base de datos.
 - Utilizar Redis Cache para acelerar lecturas frecuentes.
 - Invalidar el caché cuando se crea, actualiza, elimina, llena o vacía una sesión.
+- Ejecutar pruebas automatizadas de integración con Jest y Supertest.
 
 ---
 
@@ -734,7 +735,7 @@ Actividad 02 → Redis Pub/Sub
 Actividad 03 → Supabase PostgreSQL + Prisma ORM
 ```
 
-El resultado final es una API con base de datos en la nube, mensajería asíncrona y caché integrado.
+El resultado final es una API con base de datos en la nube, mensajería asíncrona, caché integrado, documentación interactiva y pruebas automatizadas.
 
 ---
 
@@ -751,6 +752,9 @@ El resultado final es una API con base de datos en la nube, mensajería asíncro
 | Redis Pub/Sub | Publicación de eventos en tiempo real. |
 | Redis Cache | Almacenamiento temporal para acelerar consultas. |
 | Swagger | Documentación interactiva de endpoints. |
+| Express Rate Limit | Protección contra exceso de solicitudes. |
+| Jest | Framework utilizado para ejecutar pruebas automatizadas. |
+| Supertest | Librería utilizada para probar endpoints HTTP de Express. |
 | Render | Plataforma de despliegue de la API. |
 | GitHub | Control de versiones y repositorio del proyecto. |
 
@@ -797,7 +801,7 @@ Prisma se aplica principalmente en estos archivos:
 
 ## Modelos definidos en Prisma
 
-Se definieron dos modelos principales:
+Se definieron dos modelos principales: `Usuario` y `Sesion`.
 
 ```prisma
 model Usuario {
@@ -921,7 +925,7 @@ Supabase PostgreSQL se utiliza como base de datos principal para almacenar la in
 
 Prisma ORM permite comunicar la API con la base de datos mediante modelos y métodos de consulta, evitando escribir SQL manualmente en cada operación.
 
-Redis se utiliza con dos propósitos:
+Redis se utiliza con dos propósitos principales:
 
 1. **Redis Pub/Sub:** para publicar eventos cuando ocurren cambios en la base de datos.
 2. **Redis Cache:** para almacenar temporalmente consultas frecuentes y mejorar el rendimiento.
@@ -1101,6 +1105,7 @@ Se debe incluir un archivo `.env.example` con valores de referencia sin credenci
 | `npm install prisma --save-dev` | Instala Prisma como dependencia de desarrollo. |
 | `npm install @prisma/client` | Instala Prisma Client para usarlo en el código. |
 | `npm install @prisma/adapter-pg pg` | Instala el adaptador PostgreSQL requerido por Prisma 7. |
+| `npm install jest supertest --save-dev` | Instala herramientas para pruebas automatizadas. |
 | `npx prisma init` | Inicializa Prisma en el proyecto. |
 | `npx prisma db push` | Sincroniza los modelos con la base de datos. |
 | `npx prisma generate` | Genera Prisma Client. |
@@ -1108,6 +1113,7 @@ Se debe incluir un archivo `.env.example` con valores de referencia sin credenci
 | `npm run subscriber` | Ejecuta el suscriptor Redis Pub/Sub. |
 | `npm run test:redis` | Prueba la conexión con Redis. |
 | `npm run test:publisher` | Publica un evento de prueba. |
+| `npm test` | Ejecuta la suite de pruebas automatizadas. |
 
 ---
 
@@ -1193,6 +1199,49 @@ Se publica el evento study-session.cleared.
 
 ---
 
+## Pruebas automatizadas con Jest y Supertest
+
+Para alcanzar un nivel estratégico en las pruebas de integración, se implementó una suite básica de pruebas automatizadas utilizando **Jest** y **Supertest**.
+
+Estas pruebas permiten validar automáticamente el comportamiento principal de la API sin depender únicamente de pruebas manuales en Thunder Client.
+
+Archivo de pruebas:
+
+```txt
+src/test/sesiones.test.js
+```
+
+Comando para ejecutar las pruebas:
+
+```bash
+npm test
+```
+
+Las pruebas automatizadas validan:
+
+| Prueba | Descripción |
+|---|---|
+| `GET /` | Verifica que la API esté activa. |
+| `GET /api/sesiones` | Verifica que la API liste sesiones correctamente. |
+| `POST /api/sesiones` | Crea una sesión en Supabase mediante Prisma. |
+| `GET /api/sesiones/:id` | Consulta la sesión creada por ID. |
+| `PUT /api/sesiones/:id` | Actualiza una sesión existente. |
+| `POST /api/sesiones/:id/llenar` | Marca una sesión como llena. |
+| `DELETE /api/sesiones/:id` | Elimina la sesión creada. |
+| `GET /api/sesiones/:id` después de eliminar | Verifica que la API devuelva `404` si la sesión ya no existe. |
+
+Resultado esperado:
+
+```txt
+PASS src/test/sesiones.test.js
+```
+
+Estas pruebas demuestran que el CRUD principal funciona correctamente y que la API está integrada con Supabase PostgreSQL mediante Prisma ORM.
+
+Además, durante las pruebas se validan acciones que también interactúan con Redis, como la invalidación de caché y la publicación de eventos Pub/Sub al crear, actualizar, llenar o eliminar una sesión.
+
+---
+
 ## Prueba de persistencia
 
 Para comprobar que los datos ya no se guardan en memoria:
@@ -1223,7 +1272,7 @@ Además, para que Prisma funcione correctamente en producción, se agregó gener
 URL de producción:
 
 ```txt
-https://TU-URL-DE-RENDER.onrender.com
+https://studysync-api-ivi1.onrender.com
 ```
 
 ---
@@ -1245,7 +1294,7 @@ http://localhost:3000/api-docs
 Ejemplo en producción:
 
 ```txt
-https://TU-URL-DE-RENDER.onrender.com/api-docs
+https://studysync-api-ivi1.onrender.com/api-docs
 ```
 
 ---
@@ -1283,8 +1332,8 @@ Código HTTP:
 |---|---|
 | BD en la nube funcional | Supabase PostgreSQL, Prisma ORM, modelos relacionados e índices justificados. |
 | Integración Redis + BD | Redis Pub/Sub, Redis Cache e invalidación de caché al modificar la base de datos. |
-| Arquitectura documentada | Diagrama de API, Prisma, Supabase, Redis Cache y Redis Pub/Sub. |
-| Pruebas de integración | Pruebas de CRUD, persistencia, eventos Redis y validación en Supabase. |
+| Arquitectura documentada | Diagrama de API, Prisma, Supabase, Redis Cache y Redis Pub/Sub, explicando por qué Redis complementa a la base de datos. |
+| Pruebas de integración | Pruebas manuales con Thunder Client y suite automatizada básica con Jest + Supertest. |
 
 ---
 
@@ -1294,4 +1343,4 @@ La Actividad 03 permitió evolucionar StudySync API hacia una arquitectura más 
 
 La API ya no depende de datos en memoria, sino que utiliza Supabase PostgreSQL para almacenar la información de forma persistente. Prisma ORM permite trabajar con la base de datos mediante modelos y métodos de consulta. Redis se utiliza tanto para eventos Pub/Sub como para caché, lo que mejora la comunicación y el rendimiento del sistema.
 
-Con esta integración, StudySync API cuenta con una base de datos en la nube, comunicación asíncrona, invalidación de caché, documentación interactiva y despliegue en Render.
+Con esta integración, StudySync API cuenta con una base de datos en la nube, comunicación asíncrona, invalidación de caché, documentación interactiva, despliegue en Render y pruebas automatizadas. Esto permite demostrar una arquitectura más completa, persistente, documentada y preparada para un entorno backend real.
