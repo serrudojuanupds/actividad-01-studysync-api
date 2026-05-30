@@ -581,7 +581,7 @@ http://localhost:3000/api-docs
 Ruta en producción:
 
 ```txt
-https://TU-URL-DE-RENDER.onrender.com/api-docs
+https://studysync-api-ivi1.onrender.com/api-docs
 ```
 
 Swagger permite visualizar los endpoints disponibles, revisar sus parámetros, observar ejemplos de request body y probar las rutas directamente desde el navegador.
@@ -653,7 +653,7 @@ Para que Redis funcione en producción, se configuró la variable de entorno `RE
 URL de producción:
 
 ```txt
-https://TU-URL-DE-RENDER.onrender.com
+https://studysync-api-ivi1.onrender.com
 ```
 
 ---
@@ -662,4 +662,4 @@ https://TU-URL-DE-RENDER.onrender.com
 
 Con esta implementación, la API StudySync evolucionó de una API REST básica a un sistema más completo, incorporando mensajería asíncrona, documentación interactiva y protección contra exceso de solicitudes.
 
-Redis Pub/Sub permite desacoplar procesos, ya que la API publica eventos y otros componentes pueden reaccionar a ellos de manera independiente. Swagger facilita la documentación y prueba de endpoints, mientras que Rate Limiting agrega una capa básica de seguridad para el consumo de la API.
+Redis Pub/Sub permite desacoplar procesos, ya que la API publica eventos y otros componentes pueden reaccionar a ellos de manera independiente. Swagger facilita la documentación y prueba de endpoints, mientras que Rate Limiting agrega una capa básica de seguridad para el consumo de la API.  git
