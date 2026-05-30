@@ -2,6 +2,8 @@ const express = require("express");
 const dotenv = require("dotenv");
 const swaggerUi = require("swagger-ui-express");
 
+dotenv.config();
+
 const sesionesRoutes = require("./routes/sesiones.routes");
 const swaggerDocument = require("./docs/swagger");
 
@@ -10,8 +12,6 @@ const {
   notFoundHandler,
   errorHandler
 } = require("./middlewares/error.middleware");
-
-dotenv.config();
 
 const app = express();
 
